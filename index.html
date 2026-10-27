@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#101e2b" />
+    <meta name="description" content="DNA 配对大作战：把 A 与 T、C 与 G 放在一起，轻松认识 DNA 互补配对。" />
+    <title>DNA 配对大作战 · 生物信息学小游戏</title>
+  </head>
+  <body>
+    <main class="page-shell">
+      <header class="page-header">
+        <p class="eyebrow">FUZHOU UNIVERSITY · BIOINFORMATICS GAME</p>
+        <h1><span>DNA 配对</span>大作战</h1>
+        <p class="subtitle">把能配对的字母放在一起。就这么简单！</p>
+        <div class="hero-metrics" aria-label="配对提示"><span><strong>A</strong> ↔ <strong>T</strong></span><span><strong>C</strong> ↔ <strong>G</strong><small>首个配对后解锁</small></span></div>
+      </header>
+
+      <section class="game-panel" aria-label="DNA 配对游戏">
+        <div class="panel-topline">
+          <div class="score-card"><span>得分</span><strong id="score-value">0</strong></div>
+          <div class="next-card"><img id="next-image" alt="" hidden /><span id="next-fallback" class="next-fallback" hidden>?</span><span>下一张<br /><strong id="next-value">--</strong></span></div>
+          <div class="panel-actions">
+            <button id="mute-toggle" class="panel-button" type="button" aria-pressed="false" disabled>静音</button>
+          </div>
+        </div>
+        <p id="game-status" class="game-status" role="status" aria-live="polite">正在载入碱基卡片…</p>
+        <div id="game-root">
+          <div id="start-screen" class="screen-overlay" role="dialog" aria-modal="true" aria-labelledby="start-title">
+            <div class="screen-card">
+              <p class="screen-eyebrow">第一关 · 只要记住一件事</p>
+              <h2 id="start-title">让 A 遇见 T</h2>
+              <p>移动位置后点击投放；手机上按住滑动，松手投放。</p>
+              <p class="screen-hint">让 A 和 T 碰到一起，就能成功配对。</p>
+              <button id="start-button" type="button" disabled>正在载入…</button>
+            </div>
+          </div>
+          <div id="game-over" class="game-over" role="dialog" aria-modal="true" aria-labelledby="game-over-title" hidden>
+            <div class="screen-card">
+              <p class="screen-eyebrow">本局结束</p>
+              <h2 id="game-over-title">配对台已满</h2>
+              <p>卡片持续越过警戒线。</p>
+              <p class="final-score">得分 <strong id="final-score">0</strong></p>
+              <button id="restart-button" type="button">再玩一次</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="insight-panel" aria-labelledby="insight-title">
+        <div class="section-heading"><span>LEARN AS YOU PLAY</span><h2 id="insight-title">配对小知识</h2></div>
+        <div class="insight-body"><span id="insight-tag" class="insight-tag">腺嘌呤 · A</span><h3 id="insight-name">A</h3><p id="insight-fact">在双链 DNA 中，A 通常与 T 互补配对。试着让 A 与 T 相碰。</p><p id="insight-cue" class="insight-cue">新手关只会出现 A 和 T。</p></div>
+      </section>
+      <p id="asset-warning" class="asset-warning" role="status" hidden></p>
+      <section class="level-guide" aria-labelledby="level-guide-title">
+        <div class="section-heading"><span>YOUR COLLECTION</span><h2 id="level-guide-title">碱基与片段图鉴</h2></div>
+        <p class="guide-intro">点击卡片看小知识。A 配 T，C 配 G；相同长度的片段还能继续合并。</p>
+        <ol id="level-list" class="level-list"></ol>
+      </section>
+      <section class="quiz-panel" aria-labelledby="quiz-title">
+        <div class="section-heading"><span>OPTIONAL CHALLENGE</span><h2 id="quiz-title">配对小测验</h2></div>
+        <p class="guide-intro">想试试记住了吗？答几道简单题，答错也有提示。</p>
+        <div class="quiz-progress" id="quiz-progress"></div>
+        <h3 id="quiz-question"></h3>
+        <div id="quiz-options" class="quiz-options"></div>
+        <p id="quiz-feedback" class="quiz-feedback" role="status" aria-live="polite"></p>
+        <button id="quiz-next" class="quiz-next" type="button" hidden>下一题</button>
+      </section>
+      <section class="about-panel" aria-labelledby="about-title">
+        <div class="section-heading"><span>ABOUT THE PROJECT</span><h2 id="about-title">游戏里的生物信息学</h2></div>
+        <p>互补碱基配对是理解 DNA 双链的基础。知道 A、T、C、G 后，就能进一步阅读和比较 DNA 序列。游戏里“两个片段合成更长片段”只表示长度升级，不模拟真实 DNA 合成。</p>
+        <p>参考资料：<a href="https://www.genome.gov/genetics-glossary/Base-Pair" target="_blank" rel="noopener noreferrer">NHGRI 碱基对词条</a> · <a href="https://www.ebi.ac.uk/training/online/courses/guide-to-sequence-analysis-tools/sequence-alignment/" target="_blank" rel="noopener noreferrer">EMBL-EBI 序列比对教程</a>。卡片图形和短音效均由本项目制作。</p>
+      </section>
+      <div id="test-tools" class="test-tools" hidden>
+        <label for="test-level">本地验收：将待投放等级设为</label>
+        <select id="test-level">
+          <option value="1">1 级</option><option value="2">2 级</option>
+          <option value="3">3 级</option><option value="4">4 级</option>
+          <option value="5">5 级</option><option value="6">6 级</option>
+          <option value="7">7 级</option><option value="8">8 级</option>
+        </select>
+        <button id="test-apply" type="button">设为待投放</button>
+        <button id="test-cluster" type="button">A、T、A 同时接触</button>
+        <button id="test-overline" type="button">固定角色越线</button>
+        <button id="test-recover" type="button">移回线下</button>
+        <button id="test-return" type="button">再次越线</button>
+        <button id="test-stress" type="button">50 枚压力测试</button>
+        <span id="stress-result" aria-live="polite"></span>
+        <span>仅在开发服务的 ?test=1 页面显示；指定等级每次投放前点击“设为待投放”。</span>
+      </div>
+    </main>
+    <script>
+      // 文件方式打开时，加载构建好的普通脚本；开发服务仍由 Vite 加载 TypeScript 入口。
+      if (location.protocol === 'file:') {
+        const style = document.createElement('link');
+        style.rel = 'stylesheet';
+        style.href = './offline/game.css';
+        document.head.append(style);
+        const game = document.createElement('script');
+        game.src = './offline/game.js';
+        document.body.append(game);
+      }
+    </script>
+  </body>
+</html>
