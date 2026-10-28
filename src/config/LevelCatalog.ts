@@ -70,14 +70,3 @@ export function getShapeHalfExtents(config: LevelConfig): { x: number; y: number
   }
   return { x: x * config.radius, y: y * config.radius };
 }
-
-/** 新手阶段只出现 A/T；连续出现两次的碱基在下一次抽取时被排除。 */
-export function drawDropLevel(
-  unlocked: boolean,
-  random: () => number = Math.random,
-  excluded?: DropLevel,
-): DropLevel {
-  const pool: DropLevel[] = unlocked ? [1, 2, 3, 4] : [1, 2];
-  const candidates = excluded === undefined ? pool : pool.filter((level) => level !== excluded);
-  return candidates[Math.min(Math.floor(random() * candidates.length), candidates.length - 1)];
-}

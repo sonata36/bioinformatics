@@ -128,6 +128,7 @@ export class GameScene extends Phaser.Scene {
       guideEndY: FAILURE_LINE_Y - 8,
       cooldownMs: 250,
       canDrop: () => this.hasStarted && !this.session.isEnded && !this.stressMode,
+      getBoardBases: () => this.getBoardBases(),
       onDrop: (x, level) => {
         const y = BOARD_TOP + getShapeHalfExtents(getLevelConfig(level)).y + 2;
         this.createPiece(level, x, y, this.time.now);
@@ -380,6 +381,14 @@ export class GameScene extends Phaser.Scene {
     this.session.forgetPiece(piece.id);
     if (this.testOverlinePiece?.id === piece.id) this.testOverlinePiece = null;
     piece.image.destroy();
+  }
+
+  private getBoardBases(): [number, number, number, number] {
+    const counts: [number, number, number, number] = [0, 0, 0, 0];
+    for (const piece of this.pieces.values()) {
+      if (piece.level <= 4) counts[piece.level - 1] += 1;
+    }
+    return counts;
   }
 
   private finishGame(): void {

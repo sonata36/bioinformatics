@@ -1,6 +1,8 @@
 import Phaser from 'phaser';
-import { drawDropLevel, getLevelConfig, getShapeHalfExtents, getSpriteDisplaySize } from '../config/LevelCatalog';
+import { getLevelConfig, getShapeHalfExtents, getSpriteDisplaySize } from '../config/LevelCatalog';
 import type { DropLevel, Level } from '../config/LevelCatalog';
+import { advancePartnerWaits, chooseNextBase, missingPartners } from './BaseDropStrategy';
+import type { BaseCounts } from './BaseDropStrategy';
 
 type DropControllerOptions = {
   minX: number;
@@ -8,6 +10,7 @@ type DropControllerOptions = {
   guideEndY: number;
   cooldownMs: number;
   canDrop: () => boolean;
+  getBoardBases: () => BaseCounts;
   onDrop: (x: number, level: Level) => void;
   onQueueChange: (current: Level, next: DropLevel) => void;
 };
@@ -21,6 +24,7 @@ export class DropController {
   private currentLevel: Level = 1;
   private nextLevel: DropLevel = 2;
   private lastDroppedLevel: DropLevel | null = null;
+  private partnerWaits: BaseCounts = [0, 0, 0, 0];
   private readonly guide: Phaser.GameObjects.Graphics;
 
   constructor(
@@ -59,9 +63,12 @@ export class DropController {
     const now = this.scene.time.now;
     if (!this.options.canDrop() || now < this.nextDropAt) return;
     this.nextDropAt = now + this.options.cooldownMs;
-    this.options.onDrop(this.x, this.currentLevel);
-    this.lastDroppedLevel = this.currentLevel <= 4 ? this.currentLevel as DropLevel : null;
+    const droppedLevel = this.currentLevel;
+    this.options.onDrop(this.x, droppedLevel);
+    this.lastDroppedLevel = droppedLevel <= 4 ? droppedLevel as DropLevel : null;
     this.currentLevel = this.nextLevel;
+    const missing = missingPartners(this.options.getBoardBases(), this.currentLevel);
+    this.partnerWaits = advancePartnerWaits(this.partnerWaits, droppedLevel, this.currentLevel, missing);
     this.nextLevel = this.drawNextLevel();
     this.updatePreview();
   };
@@ -112,6 +119,7 @@ export class DropController {
     this.currentLevel = 1;
     this.nextLevel = 2;
     this.lastDroppedLevel = null;
+    this.partnerWaits = [0, 0, 0, 0];
     this.x = (this.options.minX + this.options.maxX) / 2;
     this.updatePreview();
   }
@@ -125,10 +133,13 @@ export class DropController {
   }
 
   private drawNextLevel(): DropLevel {
-    const excluded = this.currentLevel === this.lastDroppedLevel
-      ? this.lastDroppedLevel ?? undefined
-      : undefined;
-    return drawDropLevel(this.unlocked, Math.random, excluded);
+    return chooseNextBase(
+      this.unlocked,
+      this.currentLevel,
+      this.lastDroppedLevel,
+      missingPartners(this.options.getBoardBases(), this.currentLevel),
+      this.partnerWaits,
+    );
   }
 
   private destroy(): void {

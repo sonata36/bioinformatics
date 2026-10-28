@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { LEVELS, drawDropLevel, getLevelConfig } from '../src/config/LevelCatalog.ts';
+import { LEVELS, getLevelConfig } from '../src/config/LevelCatalog.ts';
+import { advancePartnerWaits, chooseNextBase, missingPartners } from '../src/domain/BaseDropStrategy.ts';
 import { MergeResolver } from '../src/domain/MergeResolver.ts';
 import { DROP_GRACE_MS, GameSession, OVER_LINE_MS } from '../src/domain/GameSession.ts';
 
@@ -12,22 +13,24 @@ test('四种碱基同样大小，片段随长度增加', () => {
   assert.equal(getLevelConfig(8).textureKey, 'level-8');
 });
 
-test('新手阶段只投放 A/T，解锁后四种碱基等概率', () => {
-  assert.deepEqual([0, .4999, .5, .9999].map((value) => drawDropLevel(false, () => value)), [1, 1, 2, 2]);
-  assert.deepEqual([0, .2499, .25, .4999, .5, .7499, .75, .9999].map((value) => drawDropLevel(true, () => value)), [1, 1, 2, 2, 3, 3, 4, 4]);
+test('待投放球计入配对供给，场上失衡时提高缺少球的抽取概率', () => {
+  assert.deepEqual(missingPartners([3, 0, 2, 1], 3), [0, 3, 0, 2]);
+  assert.deepEqual(missingPartners([1, 0, 0, 0], 2), [0, 0, 0, 0]);
+  const missing = missingPartners([3, 0, 0, 0], 3);
+  assert.deepEqual([0, .1, .6, .8].map((value) =>
+    chooseNextBase(true, 3, 1, missing, [0, 0, 0, 0], () => value)), [1, 2, 2, 4]);
 });
 
-test('同一种碱基连续出现两次后，下次只从其他碱基等概率选取', () => {
-  const positions = [1 / 6, 1 / 2, 5 / 6];
-  for (const repeated of [1, 2, 3, 4]) {
-    const others = [1, 2, 3, 4].filter((level) => level !== repeated);
-    assert.deepEqual(
-      positions.map((value) => drawDropLevel(true, () => value, repeated)),
-      others,
-    );
-  }
-  assert.equal(drawDropLevel(false, () => 0, 1), 2);
-  assert.equal(drawDropLevel(false, () => .9999, 2), 1);
+test('保底在连续等待后补上配对球，并保留新手池和防三连规则', () => {
+  const missing = missingPartners([2, 0, 0, 0], 3);
+  let waits = [0, 0, 0, 0];
+  for (let i = 0; i < 3; i += 1) waits = advancePartnerWaits(waits, 1, 3, missing);
+  assert.deepEqual(waits, [0, 3, 0, 3]);
+  assert.equal(chooseNextBase(true, 3, 1, missing, waits, () => 0), 2);
+  assert.deepEqual(advancePartnerWaits(waits, 1, 2, missing), [0, 0, 0, 4]);
+  assert.deepEqual(advancePartnerWaits(waits, 1, 3, [0, 0, 0, 0]), [0, 0, 0, 0]);
+  assert.equal(chooseNextBase(false, 1, 1, missing, waits, () => .99), 2);
+  assert.notEqual(chooseNextBase(true, 2, 2, missing, waits, () => .99), 2);
 });
 
 test('只有 A–T、C–G 互补配对；同长度片段可继续合并', () => {
