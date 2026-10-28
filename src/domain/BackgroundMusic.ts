@@ -4,9 +4,9 @@ export class BackgroundMusic {
   private muted = false;
 
   constructor() {
-    this.audio.src = window.location.protocol === 'file:'
-      ? './assets/audio/overworld.mp3'
-      : './audio/overworld.mp3';
+    const audioDirectory = window.location.protocol === 'file:' ? './assets/audio/' : './audio/';
+    const format = this.audio.canPlayType('audio/ogg; codecs="vorbis"') ? 'ogg' : 'mp3';
+    this.audio.src = `${audioDirectory}underwater-theme-ii.${format}`;
     this.audio.loop = true;
     this.audio.preload = 'none';
     this.audio.volume = 0.14;

@@ -38,4 +38,4 @@ npm run build
 
 网站不需要数据库、服务端进程或环境变量。不要创建 Web Service。
 
-游戏沿用 Phaser 与 Matter.js 的物理投放机制，改写了互补配对、投放池和学习反馈。八张卡片由 `generate_icons.py` 绘制，短音效由 Web Audio 程序生成；没有沿用原游戏的角色图片和音乐。背景音乐使用 IntelligentGene 的 [Overworld (BGM)](https://opengameart.org/content/overworld-bgm)，根据 CC0 许可使用，文件保存在 `assets/audio/overworld.mp3`。
+游戏沿用 Phaser 与 Matter.js 的物理投放机制，改写了互补配对、投放池和学习反馈。八张卡片由 `generate_icons.py` 绘制，短音效由 Web Audio 程序生成；没有沿用原游戏的角色图片和音乐。背景音乐使用 Cleyton Kauffman 的 [Underwater Theme II](https://opengameart.org/content/underwater-theme-ii)，约 1 分 45 秒，作者标注为无缝循环曲目，按 CC0 许可使用。浏览器优先播放 OGG 文件，不支持 OGG 时播放 MP3，文件位于 `assets/audio/`。

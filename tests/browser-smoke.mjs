@@ -37,7 +37,7 @@ await send('Page.addScriptToEvaluateOnNewDocument', { source: `
   window.__bgmPlayCalls = 0;
   const originalPlay = HTMLMediaElement.prototype.play;
   HTMLMediaElement.prototype.play = function (...args) {
-    if (this.src.includes('overworld.mp3')) {
+    if (this.src.includes('underwater-theme-ii.')) {
       window.__bgmAudio = this;
       window.__bgmPlayCalls += 1;
     }
@@ -50,7 +50,7 @@ const ready = await evaluate('({disabled:document.getElementById("start-button")
 if (ready.disabled || ready.next !== 'T') throw new Error(`Opening queue is not ready: ${JSON.stringify(ready)}`);
 await evaluate('document.getElementById("start-button").click()');
 const music = await evaluate('(() => ({calls:window.__bgmPlayCalls,src:window.__bgmAudio?.src,loop:window.__bgmAudio?.loop,volume:window.__bgmAudio?.volume}))()');
-if (music.calls !== 1 || !music.src?.endsWith('/audio/overworld.mp3') || !music.loop || music.volume >= .3) {
+if (music.calls !== 1 || !music.src?.endsWith('/audio/underwater-theme-ii.ogg') || !music.loop || music.volume >= .3) {
   throw new Error(`Background music did not start correctly: ${JSON.stringify(music)}`);
 }
 await evaluate('document.getElementById("mute-toggle").click()');
@@ -59,9 +59,15 @@ if (muted.pressed !== 'true' || !muted.paused) throw new Error(`Mute did not pau
 await evaluate('document.getElementById("mute-toggle").click()');
 if (await evaluate('window.__bgmPlayCalls') !== 2) throw new Error('Unmute did not resume music');
 await wait(350);
-const playback = await evaluate('({paused:window.__bgmAudio.paused,error:window.__bgmAudio.error?.code,readyState:window.__bgmAudio.readyState})');
-if (playback.paused || playback.error || playback.readyState < 2) {
+const playback = await evaluate('({paused:window.__bgmAudio.paused,error:window.__bgmAudio.error?.code,readyState:window.__bgmAudio.readyState,duration:window.__bgmAudio.duration})');
+if (playback.paused || playback.error || playback.readyState < 2 || playback.duration < 100) {
   throw new Error(`Background music could not play: ${JSON.stringify(playback)}`);
+}
+await evaluate('new Promise((resolve, reject) => { const audio = window.__bgmAudio; audio.addEventListener("seeked", () => resolve(true), {once:true}); audio.currentTime = audio.duration - .25; setTimeout(() => reject(new Error("seek timeout")), 5000); })');
+await wait(1300);
+const loopPosition = await evaluate('({paused:window.__bgmAudio.paused,currentTime:window.__bgmAudio.currentTime})');
+if (loopPosition.paused || loopPosition.currentTime > 2) {
+  throw new Error(`Background music did not loop: ${JSON.stringify(loopPosition)}`);
 }
 await evaluate('document.querySelector("#game-root canvas").scrollIntoView({block:"center"})');
 const rect = await evaluate('(() => { const r=document.querySelector("#game-root canvas").getBoundingClientRect(); return {x:r.left+r.width/2,y:r.top+r.height*.35}; })()');

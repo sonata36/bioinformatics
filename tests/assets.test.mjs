@@ -17,10 +17,14 @@ test('八级角色图实际存在，均为独立的 512×512 RGBA PNG', async ()
   assert.equal(hashes.size, 8);
 });
 
-test('背景音乐是可部署的 MP3 文件', async () => {
-  const data = await readFile(new URL('../assets/audio/overworld.mp3', import.meta.url));
-  assert.ok(data.length > 50_000);
-  const hasId3 = data.subarray(0, 3).toString('ascii') === 'ID3';
-  const hasMpegFrame = data[0] === 0xff && (data[1] & 0xe0) === 0xe0;
+test('长版背景音乐有 OGG 主文件与 MP3 回退文件', async () => {
+  const ogg = await readFile(new URL('../assets/audio/underwater-theme-ii.ogg', import.meta.url));
+  assert.ok(ogg.length > 1_000_000);
+  assert.equal(ogg.subarray(0, 4).toString('ascii'), 'OggS');
+
+  const mp3 = await readFile(new URL('../assets/audio/underwater-theme-ii.mp3', import.meta.url));
+  assert.ok(mp3.length > 1_000_000);
+  const hasId3 = mp3.subarray(0, 3).toString('ascii') === 'ID3';
+  const hasMpegFrame = mp3[0] === 0xff && (mp3[1] & 0xe0) === 0xe0;
   assert.ok(hasId3 || hasMpegFrame);
 });
