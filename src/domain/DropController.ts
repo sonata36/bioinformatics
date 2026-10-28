@@ -20,6 +20,7 @@ export class DropController {
   private unlocked = false;
   private currentLevel: Level = 1;
   private nextLevel: DropLevel = 2;
+  private lastDroppedLevel: DropLevel | null = null;
   private readonly guide: Phaser.GameObjects.Graphics;
 
   constructor(
@@ -59,8 +60,9 @@ export class DropController {
     if (!this.options.canDrop() || now < this.nextDropAt) return;
     this.nextDropAt = now + this.options.cooldownMs;
     this.options.onDrop(this.x, this.currentLevel);
+    this.lastDroppedLevel = this.currentLevel <= 4 ? this.currentLevel as DropLevel : null;
     this.currentLevel = this.nextLevel;
-    this.nextLevel = drawDropLevel(this.unlocked);
+    this.nextLevel = this.drawNextLevel();
     this.updatePreview();
   };
 
@@ -99,7 +101,7 @@ export class DropController {
   unlockBases(): void {
     if (this.unlocked) return;
     this.unlocked = true;
-    this.nextLevel = drawDropLevel(true);
+    this.nextLevel = this.drawNextLevel();
     this.updatePreview();
   }
 
@@ -109,6 +111,7 @@ export class DropController {
     this.unlocked = false;
     this.currentLevel = 1;
     this.nextLevel = 2;
+    this.lastDroppedLevel = null;
     this.x = (this.options.minX + this.options.maxX) / 2;
     this.updatePreview();
   }
@@ -119,6 +122,13 @@ export class DropController {
     this.preview.setDisplaySize(getSpriteDisplaySize(config), getSpriteDisplaySize(config));
     this.movePreview(this.x);
     this.options.onQueueChange(this.currentLevel, this.nextLevel);
+  }
+
+  private drawNextLevel(): DropLevel {
+    const excluded = this.currentLevel === this.lastDroppedLevel
+      ? this.lastDroppedLevel ?? undefined
+      : undefined;
+    return drawDropLevel(this.unlocked, Math.random, excluded);
   }
 
   private destroy(): void {

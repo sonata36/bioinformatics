@@ -7,6 +7,7 @@ import { DropController } from '../domain/DropController';
 import { GameSession } from '../domain/GameSession';
 import { MergeResolver } from '../domain/MergeResolver';
 import { SoundFeedback } from '../domain/SoundFeedback';
+import { BackgroundMusic } from '../domain/BackgroundMusic';
 import type { Piece } from '../domain/Piece';
 
 const BOARD_LEFT = 50;
@@ -32,6 +33,7 @@ export class GameScene extends Phaser.Scene {
   private startButton: HTMLButtonElement | null = null;
   private muteButton: HTMLButtonElement | null = null;
   private readonly soundFeedback = new SoundFeedback();
+  private readonly backgroundMusic = new BackgroundMusic();
   private readonly missingLevels = new Set<Level>();
   private hasStarted = false;
   private hasShownFirstDrop = false;
@@ -150,6 +152,7 @@ export class GameScene extends Phaser.Scene {
       this.startButton?.removeEventListener('click', this.startGame);
       this.muteButton?.removeEventListener('click', this.toggleMute);
       this.soundFeedback.close();
+      this.backgroundMusic.close();
       this.mergeResolver.clear();
       this.pieces.clear();
       this.pieceIdByBodyId.clear();
@@ -386,6 +389,7 @@ export class GameScene extends Phaser.Scene {
     this.mergeFlushScheduled = false;
     this.matter.world.off('collisionstart', this.onCollisionStart, this);
     this.matter.world.pause();
+    this.backgroundMusic.pause();
     this.soundFeedback.playFail();
     this.updateStatus(`配对台已满，本局得分 ${this.session.score}`);
     if (this.finalScoreElement) this.finalScoreElement.textContent = String(this.session.score);
@@ -410,6 +414,7 @@ export class GameScene extends Phaser.Scene {
     if (this.gameOverElement) this.gameOverElement.hidden = true;
     this.matter.world.resume();
     this.matter.world.on('collisionstart', this.onCollisionStart, this);
+    this.backgroundMusic.play();
   };
 
   private updateScore(): void {
@@ -421,12 +426,15 @@ export class GameScene extends Phaser.Scene {
     this.hasStarted = true;
     this.dropController?.setGuideVisible(true);
     this.soundFeedback.unlock();
+    this.backgroundMusic.play();
     if (this.startScreen) this.startScreen.hidden = true;
     this.updateStatus('先把 A 投下去，再让 T 落到 A 附近');
   };
 
   private readonly toggleMute = (): void => {
     this.soundFeedback.setMuted(!this.soundFeedback.isMuted);
+    this.backgroundMusic.setMuted(this.soundFeedback.isMuted);
+    if (!this.soundFeedback.isMuted && this.hasStarted && !this.session.isEnded) this.backgroundMusic.play();
     if (!this.muteButton) return;
     this.muteButton.textContent = this.soundFeedback.isMuted ? '开启声音' : '静音';
     this.muteButton.setAttribute('aria-pressed', String(this.soundFeedback.isMuted));

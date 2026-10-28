@@ -32,11 +32,38 @@ const pointer = async (x, y) => {
   await send('Input.dispatchMouseEvent', { type: 'mouseReleased', x, y, button: 'left', clickCount: 1 });
 };
 
+await send('Page.enable');
+await send('Page.addScriptToEvaluateOnNewDocument', { source: `
+  window.__bgmPlayCalls = 0;
+  const originalPlay = HTMLMediaElement.prototype.play;
+  HTMLMediaElement.prototype.play = function (...args) {
+    if (this.src.includes('overworld.mp3')) {
+      window.__bgmAudio = this;
+      window.__bgmPlayCalls += 1;
+    }
+    return originalPlay.apply(this, args);
+  };
+` });
 await send('Page.reload', { ignoreCache: true });
 await wait(1200);
 const ready = await evaluate('({disabled:document.getElementById("start-button").disabled, next:document.getElementById("next-value").textContent})');
 if (ready.disabled || ready.next !== 'T') throw new Error(`Opening queue is not ready: ${JSON.stringify(ready)}`);
 await evaluate('document.getElementById("start-button").click()');
+const music = await evaluate('(() => ({calls:window.__bgmPlayCalls,src:window.__bgmAudio?.src,loop:window.__bgmAudio?.loop,volume:window.__bgmAudio?.volume}))()');
+if (music.calls !== 1 || !music.src?.endsWith('/audio/overworld.mp3') || !music.loop || music.volume >= .3) {
+  throw new Error(`Background music did not start correctly: ${JSON.stringify(music)}`);
+}
+await evaluate('document.getElementById("mute-toggle").click()');
+const muted = await evaluate('({pressed:document.getElementById("mute-toggle").getAttribute("aria-pressed"),paused:window.__bgmAudio.paused})');
+if (muted.pressed !== 'true' || !muted.paused) throw new Error(`Mute did not pause music: ${JSON.stringify(muted)}`);
+await evaluate('document.getElementById("mute-toggle").click()');
+if (await evaluate('window.__bgmPlayCalls') !== 2) throw new Error('Unmute did not resume music');
+await wait(350);
+const playback = await evaluate('({paused:window.__bgmAudio.paused,error:window.__bgmAudio.error?.code,readyState:window.__bgmAudio.readyState})');
+if (playback.paused || playback.error || playback.readyState < 2) {
+  throw new Error(`Background music could not play: ${JSON.stringify(playback)}`);
+}
+await evaluate('document.querySelector("#game-root canvas").scrollIntoView({block:"center"})');
 const rect = await evaluate('(() => { const r=document.querySelector("#game-root canvas").getBoundingClientRect(); return {x:r.left+r.width/2,y:r.top+r.height*.35}; })()');
 await pointer(rect.x, rect.y);
 await wait(1300);

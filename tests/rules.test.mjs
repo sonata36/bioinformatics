@@ -17,6 +17,19 @@ test('新手阶段只投放 A/T，解锁后四种碱基等概率', () => {
   assert.deepEqual([0, .2499, .25, .4999, .5, .7499, .75, .9999].map((value) => drawDropLevel(true, () => value)), [1, 1, 2, 2, 3, 3, 4, 4]);
 });
 
+test('同一种碱基连续出现两次后，下次只从其他碱基等概率选取', () => {
+  const positions = [1 / 6, 1 / 2, 5 / 6];
+  for (const repeated of [1, 2, 3, 4]) {
+    const others = [1, 2, 3, 4].filter((level) => level !== repeated);
+    assert.deepEqual(
+      positions.map((value) => drawDropLevel(true, () => value, repeated)),
+      others,
+    );
+  }
+  assert.equal(drawDropLevel(false, () => 0, 1), 2);
+  assert.equal(drawDropLevel(false, () => .9999, 2), 1);
+});
+
 test('只有 A–T、C–G 互补配对；同长度片段可继续合并', () => {
   for (const [left, right] of [[1,2], [2,1], [3,4], [4,3]]) {
     const resolver = new MergeResolver();
