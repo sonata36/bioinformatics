@@ -26,4 +26,14 @@ npm test
 npm run build
 ```
 
+## 部署到 Render
+
+仓库根目录提供了 `render.yaml`。在 Render 连接此 GitHub 仓库后，可选择 Blueprint 导入该文件；或者手动创建 **Static Site**，设置：
+
+- Branch：`main`
+- Build Command：`npm ci && npm run build`
+- Publish Directory：`dist`
+
+网站不需要数据库、服务端进程或环境变量。不要创建 Web Service。
+
 游戏沿用 Phaser 与 Matter.js 的物理投放机制，改写了互补配对、投放池和学习反馈。八张卡片由 `generate_icons.py` 绘制，短音效由 Web Audio 程序生成；没有沿用原游戏的角色图片和音乐。
